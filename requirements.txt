@@ -1,0 +1,5 @@
+reportlab
+opencv-python
+numpy
+Flask
+PyMuPDF

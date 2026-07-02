@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Chấm thi Trắc nghiệm - Quiz Scanner</title>
+    <!-- Google Font Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --border: #475569;
+            --radius-lg: 12px;
+            --radius-md: 8px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        header {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto 2rem auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.25rem;
+        }
+
+        .logo-section p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .actions-header {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            background-color: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 0.625rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover:not(:disabled) {
+            border-color: var(--text-muted);
+            background-color: #3e4e68;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: var(--error);
+            color: white;
+            border-color: var(--error);
+        }
+
+        .btn-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        main {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            flex-grow: 1;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #e2e8f0;
+        }
+
+        /* Upload Area */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background-color: rgba(30, 41, 59, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent);
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-zone svg {
+            width: 48px;
+            height: 48px;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .upload-zone:hover svg {
+            color: var(--accent);
+            transform: translateY(-3px);
+        }
+
+        .upload-zone input {
+            display: none;
+        }
+
+        .upload-zone p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .upload-zone span {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        /* Candidates List (Mini Panel) */
+        .candidates-info-panel {
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 0.25rem;
+        }
+
+        .candidate-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.4);
+            font-size: 0.8125rem;
+        }
+
+        .candidate-item:last-child {
+            border-bottom: none;
+        }
+
+        .candidate-item .name {
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+
+        .candidate-item .cccd-lbl {
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        /* Results Section */
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background-color: rgba(51, 65, 85, 0.5);
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.5);
+            color: #e2e8f0;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: rgba(51, 65, 85, 0.2);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+        }
+
+        .badge-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .badge-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .text-error {
+            color: var(--error);
+            font-size: 0.75rem;
+        }
+
+        .text-cccd {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .score-display {
+            font-weight: 700;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        /* Modal Edit */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(15, 23, 42, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-container {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 1000px;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.95);
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--text-main);
+        }
+
+        .modal-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .preview-pane {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: auto;
+            background-color: #0f172a;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            position: relative;
+        }
+
+        .preview-pane img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .editor-pane {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.625rem 0.875rem;
+            border-radius: var(--radius-md);
+            font-size: 0.9375rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+        }
+
+        /* Quick Bubble Selector Grid - 3 Columns with stats */
+        .q-columns-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            background-color: rgba(15, 23, 42, 0.3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0.5rem;
+        }
+
+        .q-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .q-column-header {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-align: center;
+            background-color: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: var(--radius-sm);
+            padding: 0.25rem;
+            margin-bottom: 0.15rem;
+        }
+
+        .q-column-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+
+        .q-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.375rem 0.5rem;
+            background-color: var(--bg-card);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: var(--radius-md);
+            font-size: 0.8125rem;
+        }
+
+        .q-row .q-num {
+            font-weight: 600;
+            color: #cbd5e1;
+            width: 25px;
+        }
+
+        .opt-buttons {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .btn-opt {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            background: none;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .btn-opt:hover {
+            border-color: var(--text-main);
+            color: var(--text-main);
+        }
+
+        .btn-opt.active {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .btn-opt.conflict {
+            background-color: var(--error);
+            border-color: var(--error);
+            color: white;
+        }
+
+        .modal-footer {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(15, 23, 42, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-lg);
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 5rem 2rem;
+            color: var(--text-muted);
+        }
+
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 600px;
+            max-height: 80vh;
+        }
+
+        #calibrationCanvas {
+            max-width: 100%;
+            height: auto;
+            cursor: crosshair;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Header Tab Navigation */
+        .nav-tabs-header {
+            display: flex;
+            background-color: rgba(30, 41, 59, 0.7);
+            border: 1px solid var(--border);
+            padding: 0.25rem;
+            border-radius: var(--radius-lg);
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        .nav-tabs-header .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.5rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .nav-tabs-header .tab-btn:hover {
+            color: var(--text-main);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-tabs-header .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-section">
+            <h1>Chấm Thi Trắc Nghiệm</h1>
+        </div>
+        
+        <div class="nav-tabs-header">
+            <button class="tab-btn active" id="btnTabGrading" onclick="switchTab('gradingTab')">Chấm bài thi</button>
+            <button class="tab-btn" id="btnTabCalibration" onclick="switchTab('calibrationTab')">Cấu hình Tọa độ</button>
+        </div>
+        
+        <div class="actions-header">
+            <button class="btn btn-danger" id="btnClear" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                </svg>
+                Xóa bộ nhớ
+            </button>
+            <button class="btn btn-success" id="btnPrintScores" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.821V21h10.56v-7.179m-10.56 0a2.41 2.41 0 0 1-.806-.576 2.41 2.41 0 0 1-.576-.808m11.942 1.384a2.41 2.41 0 0 0 .806-.576 2.41 2.41 0 0 0 .576-.808M12 3v10.5m0 0L8.25 9.75M12 13.5l3.75-3.75" />
+                </svg>
+                In Điểm (Word)
+            </button>
+            <button class="btn btn-primary" id="btnExport" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Xuất Excel
+            </button>
+        </div>
+    </header>
+
+    <!-- Tab 1: Chấm thi -->
+    <div id="gradingTab" class="tab-content active">
+        <main>
+            <div class="sidebar">
+                <!-- Upload Card -->
+                <div class="card" style="position: relative;">
+                    <div class="loading-overlay" id="uploadLoading">
+                        <div class="spinner"></div>
+                    </div>
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        Tải phiếu chấm thi
+                    </h2>
+                    <div class="upload-zone" id="dropzone">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
+                        </svg>
+                        <p>Kéo & thả ảnh hoặc file PDF kết quả quét</p>
+                        <span>Hỗ trợ chọn hoặc tải lên nhiều file cùng lúc</span>
+                        <input type="file" id="fileInput" multiple accept="image/*,application/pdf">
+                    </div>
+                </div>
+
+                <!-- Answer Key Card -->
+                <div class="card">
+                    <h2>Đáp án chuẩn (30 câu)</h2>
+                    <div class="answer-key-scroll">
+                        <table class="key-table">
+                            <thead>
+                                <tr>
+                                    <th>Câu</th>
+                                    <th>Đáp án</th>
+                                    <th>Câu</th>
+                                    <th>Đáp án</th>
+                                </tr>
+                            </thead>
+                            <tbody id="answerKeyTableBody">
+                                <!-- JS tự render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Candidates List Card -->
+                <div class="card" style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
+                    <h2>Sinh viên trong danh sách</h2>
+                    <div class="candidates-scroll" style="flex-grow: 1; overflow-y: auto;" id="candidatesList">
+                        <!-- JS tự render danh sách -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-container">
+                <div class="card" style="flex-grow: 1; display: flex; flex-direction: column;">
+                    <h2>Danh sách Phiếu đã chấm</h2>
+                    
+                    <div style="flex-grow: 1;" id="resultsContent">
+                        <!-- Empty State -->
+                        <div class="empty-state">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                            <p>Chưa có dữ liệu. Vui lòng tải các phiếu quét ảnh/PDF ở cột bên trái để thực hiện chấm thi.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Tab 2: Hiệu chỉnh Tọa độ -->
+    <div id="calibrationTab" class="tab-content">
+        <main>
+            <div class="sidebar">
+                <!-- Upload Template Card -->
+                <div class="card" style="position: relative;">
+                    <div class="loading-overlay" id="calibrationLoading">
+                        <div class="spinner"></div>
+                    </div>
+                    <h2>Tải mẫu phiếu của bạn</h2>
+                    <div class="upload-zone" id="templateDropzone" style="padding: 1.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 32px; height: 32px; margin-bottom: 0.5rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
+                        </svg>
+                        <p style="font-size: 0.8rem; font-weight: 600;">Chọn/Kéo thả file Phiếu trống</p>
+                        <span style="font-size: 0.7rem; color: var(--text-muted);">PDF hoặc Ảnh trống chưa tô</span>
+                        <input type="file" id="templateFileInput" accept="image/*,application/pdf">
+                    </div>
+                </div>
+
+                <!-- Calibration Points Card -->
+                <div class="card" style="flex-grow: 1; display: flex; flex-direction: column;">
+                    <h2>Hiệu chỉnh Tọa độ</h2>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.35;">
+                        Chọn từng điểm bên dưới rồi Click vào đúng bong bóng đó trên ảnh phiếu bên phải.
+                    </p>
+                    <div id="calibrationPointsList" style="flex-grow: 1; overflow-y: auto;">
+                        <!-- JS tự render danh sách 10 điểm -->
+                    </div>
+                    
+                    <button class="btn btn-primary" id="btnSaveCoords" style="width: 100%; justify-content: center; margin-top: 1rem;" disabled>
+                        Lưu cấu hình tọa độ
+                    </button>
+                </div>
+            </div>
+
+            <div class="results-container" style="flex-grow: 1; display: flex; flex-direction: column; min-height: 500px;">
+                <div class="card" style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; padding: 1rem;">
+                    <h2>Hình ảnh mẫu phiếu hiệu chỉnh (1000 x 1414)</h2>
+                    <div class="calibration-canvas-container" id="canvasContainer" style="flex-grow: 1; margin-top: 0.5rem;">
+                        <canvas id="calibrationCanvas" style="display: none;"></canvas>
+                        <div id="canvasEmptyState" style="text-align: center; padding: 6rem 2rem; color: var(--text-muted); width: 100%;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" style="width: 64px; height: 64px; margin-bottom: 1rem; color: var(--border);">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 0 11-.75 0 .375 0 01.75 0z" />
+                            </svg>
+                            <p>Vui lòng tải file mẫu phiếu trống để tiến hành hiệu chỉnh tọa độ.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Xem & Sửa lỗi nhanh -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalTitle">Chi tiết phiếu chấm thi</h3>
+                <button class="modal-close" id="btnModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Preview bên trái -->
+                <div class="preview-pane">
+                    <div class="loading-overlay" id="modalImageLoading">
+                        <div class="spinner"></div>
+                    </div>
+                    <img id="modalDebugImage" src="" alt="Ảnh phiếu căn chỉnh">
+                </div>
+                
+                <!-- Editor bên phải -->
+                <div class="editor-pane">
+                    <input type="hidden" id="editSheetId">
+                    
+                    <div class="form-group">
+                        <label for="editCccd">Mã số CCCD (12 chữ số):</label>
+                        <input type="text" id="editCccd" class="form-control" placeholder="Nhập 12 số CCCD">
+                        <span id="cccdMatchLabel" style="font-size: 0.8rem; font-weight: 600;"></span>
+                    </div>
+                    
+                    <!-- Các trường thêm mới thí sinh tự động nếu CCCD chưa có trong hệ thống -->
+                    <div class="form-group" id="groupEditName" style="display: none;">
+                        <label for="editName">Họ và tên thí sinh:</label>
+                        <input type="text" id="editName" class="form-control" placeholder="Nhập Họ và tên">
+                    </div>
+                    <div class="form-group" id="groupEditDob" style="display: none;">
+                        <label for="editDob">Năm sinh:</label>
+                        <input type="text" id="editDob" class="form-control" placeholder="Nhập Năm sinh">
+                    </div>
+                    <div class="form-group" id="groupEditAddress" style="display: none;">
+                        <label for="editAddress">Nơi làm việc / Nơi thường trú:</label>
+                        <input type="text" id="editAddress" class="form-control" placeholder="Nhập Nơi làm việc / Nơi thường trú">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editDeThi">Đề thi số (4 chữ số):</label>
+                        <input type="text" id="editDeThi" class="form-control" placeholder="Nhập 4 số Đề thi">
+                    </div>
+
+                    <div class="form-group" style="flex-grow: 1; display: flex; flex-direction: column;">
+                        <label>Bảng đáp án 30 câu (Click vào đáp án để thay đổi):</label>
+                        <div class="q-columns-container" id="qColumnsContainer">
+                            <div class="q-column">
+                                <div class="q-column-header" id="qCol1Header">Cột 1 (1-10): D: 0 | S: 0</div>
+                                <div class="q-column-rows" id="qCol1Rows"></div>
+                            </div>
+                            <div class="q-column">
+                                <div class="q-column-header" id="qCol2Header">Cột 2 (11-20): D: 0 | S: 0</div>
+                                <div class="q-column-rows" id="qCol2Rows"></div>
+                            </div>
+                            <div class="q-column">
+                                <div class="q-column-header" id="qCol3Header">Cột 3 (21-30): D: 0 | S: 0</div>
+                                <div class="q-column-rows" id="qCol3Rows"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="btnModalCancel">Hủy</button>
+                <button class="btn btn-primary" id="btnModalSave">Lưu & cập nhật</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Danh sách sinh viên local từ Server
+        let candidatesDb = [];
+        let processedSheets = [];
+        let activeSheetId = null;
+
+        // Dom Elements
+        const dropzone = document.getElementById("dropzone");
+        const fileInput = document.getElementById("fileInput");
+        const btnClear = document.getElementById("btnClear");
+        const btnExport = document.getElementById("btnExport");
+        const btnPrintScores = document.getElementById("btnPrintScores");
+        const candidatesList = document.getElementById("candidatesList");
+        const resultsContent = document.getElementById("resultsContent");
+        
+        // Modal elements
+        const editModal = document.getElementById("editModal");
+        const btnModalClose = document.getElementById("btnModalClose");
+        const btnModalCancel = document.getElementById("btnModalCancel");
+        const btnModalSave = document.getElementById("btnModalSave");
+        const editSheetId = document.getElementById("editSheetId");
+        const editCccd = document.getElementById("editCccd");
+        const editDeThi = document.getElementById("editDeThi");
+        const cccdMatchLabel = document.getElementById("cccdMatchLabel");
+        const qColumnsContainer = document.getElementById("qColumnsContainer");
+        const modalDebugImage = document.getElementById("modalDebugImage");
+        const modalImageLoading = document.getElementById("modalImageLoading");
+        const uploadLoading = document.getElementById("uploadLoading");
+
+        // 1. Tải danh sách gốc và hiển thị
+        async function fetchCandidates() {
+            try {
+                const res = await fetch("/api/candidates");
+                candidatesDb = await res.json();
+                
+                if (candidatesDb.length === 0) {
+                    candidatesList.innerHTML = `<p style="color: var(--error);">Chưa có candidates.csv hoặc file rỗng.</p>`;
+                    return;
+                }
+                
+                candidatesList.innerHTML = candidatesDb.map(c => `
+                    <div class="candidate-item">
+                        <span class="name">${c.name}</span>
+                        <span class="cccd-lbl">${c.CCCD}</span>
+                    </div>
+                `).join("");
+            } catch(e) {
+                candidatesList.innerHTML = `<p style="color: var(--error);">Không thể nạp danh sách.</p>`;
+            }
+        }
+
+        // 2. Click zone upload
+        dropzone.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", e => handleFiles(e.target.files));
+
+        // Drag & Drop
+        dropzone.addEventListener("dragover", e => {
+            e.preventDefault();
+            dropzone.style.borderColor = "var(--accent)";
+        });
+        dropzone.addEventListener("dragleave", () => {
+            dropzone.style.borderColor = "var(--border)";
+        });
+        dropzone.addEventListener("drop", e => {
+            e.preventDefault();
+            dropzone.style.borderColor = "var(--border)";
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // 3. Xử lý tải ảnh lên chấm thi
+        async function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            uploadLoading.classList.add("active");
+            
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append("files", files[i]);
+            }
+            
+            try {
+                const res = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.status === "success") {
+                    // Cập nhật danh sách local
+                    // Ta nạp lại các sheets để hiển thị đầy đủ
+                    // Lưu ý: api/upload trả về kết quả chấm của lô vừa tải
+                    // Để đơn giản, ta sẽ lưu dồn kết quả vừa chấm vào mảng processedSheets
+                    data.results.forEach(sheet => {
+                        // Tránh trùng sheet_id
+                        const idx = processedSheets.findIndex(s => s.sheet_id === sheet.sheet_id);
+                        if (idx !== -1) {
+                            processedSheets[idx] = sheet;
+                        } else {
+                            processedSheets.push(sheet);
+                        }
+                    });
+                    renderResultsTable();
+                } else {
+                    alert("Lỗi tải lên: " + data.message);
+                }
+            } catch(e) {
+                alert("Lỗi kết nối Server.");
+            } finally {
+                uploadLoading.classList.remove("active");
+                fileInput.value = ""; // Reset
+            }
+        }
+
+        // 4. Render bảng kết quả
+        function renderResultsTable() {
+            if (processedSheets.length === 0) {
+                btnClear.disabled = true;
+                btnExport.disabled = true;
+                btnPrintScores.disabled = true;
+                resultsContent.innerHTML = `
+                    <div class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                        </svg>
+                        <p>Chưa có dữ liệu. Vui lòng tải các phiếu quét ảnh/PDF ở cột bên trái để thực hiện chấm thi.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            btnClear.disabled = false;
+            btnExport.disabled = false;
+            btnPrintScores.disabled = false;
+            
+            let html = `
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tên File / Trang</th>
+                                <th>Đề thi số</th>
+                                <th>Mã số CCCD</th>
+                                <th>Họ tên sinh viên</th>
+                                <th>Số câu đúng</th>
+                                <th>Điểm</th>
+                                <th>Trạng thái</th>
+                                <th style="text-align: center;">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            processedSheets.forEach(s => {
+                const statusBadge = s.has_error 
+                    ? `<span class="badge badge-danger">Lỗi quét</span>` 
+                    : `<span class="badge badge-success">Thành công</span>`;
+                
+                const cccdVal = s.cccd ? s.cccd : `<span class="text-error">Chưa nhận diện</span>`;
+                const nameVal = s.student_info ? s.student_info.name : (s.cccd ? `<span class="text-error">Không khớp danh sách</span>` : `?`);
+                const scoreText = s.has_error ? `<span class="text-muted">--</span>` : `<span class="score-display">${s.score}</span>`;
+                
+                html += `
+                    <tr>
+                        <td>
+                            <strong>${s.filename}</strong><br>
+                            <span style="font-size:0.75rem; color:var(--text-muted)">Trang ${s.page}</span>
+                        </td>
+                        <td><span class="text-cccd">${s.de_thi || '--'}</span></td>
+                        <td><span class="text-cccd">${cccdVal}</span></td>
+                        <td>${nameVal}</td>
+                        <td>${s.has_error ? '--' : s.correct_count + '/30'}</td>
+                        <td>${scoreText}</td>
+                        <td>
+                            ${statusBadge}
+                            ${s.has_error ? `<br><span class="text-error">${s.error_message}</span>` : ''}
+                        </td>
+                        <td style="text-align: center;">
+                            <button class="btn" onclick="openEditModal('${s.sheet_id}')" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                                Xem & Sửa
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            resultsContent.innerHTML = html;
+        }
+
+        // 5. Mở Modal Xem & Sửa
+        async function openEditModal(sheetId) {
+            activeSheetId = sheetId;
+            editSheetId.value = sheetId;
+            
+            // Hiện Modal Overlay
+            editModal.classList.add("active");
+            modalDebugImage.style.display = "none";
+            modalImageLoading.classList.add("active");
+            
+            try {
+                // Lấy thông tin đầy đủ kèm ảnh debug từ server
+                const res = await fetch(`/api/sheet/${sheetId}`);
+                const data = await res.json();
+                
+                if (data.sheet_id) {
+                    // Set ảnh debug
+                    if (data.debug_img) {
+                        modalDebugImage.src = "data:image/jpeg;base64," + data.debug_img;
+                        modalDebugImage.style.display = "block";
+                    }
+                    
+                    editCccd.value = data.cccd;
+                    editDeThi.value = data.de_thi || "";
+                    
+                    // Điền thông tin thí sinh tự động nếu đã được lưu trước đó
+                    document.getElementById("editName").value = (data.student_info && data.student_info.name) ? data.student_info.name : "";
+                    document.getElementById("editDob").value = (data.student_info && data.student_info.dob) ? data.student_info.dob : "";
+                    document.getElementById("editAddress").value = (data.student_info && data.student_info.address) ? data.student_info.address : "";
+                    
+                    validateCccdMatch(data.cccd);
+                    
+                    // Render form 30 câu hỏi
+                    renderQuestionGridEditor(data.answers, data.answer_key);
+                }
+            } catch(e) {
+                alert("Lỗi tải chi tiết phiếu.");
+                closeModal();
+            } finally {
+                modalImageLoading.classList.remove("active");
+            }
+        }
+
+        modalDebugImage.onload = function() {
+            modalImageLoading.classList.remove("active");
+        };
+
+        // Tìm khớp sinh viên theo CCCD trực tiếp khi gõ sửa
+        editCccd.addEventListener("input", e => {
+            validateCccdMatch(e.target.value.strip ? e.target.value.strip() : e.target.value.trim());
+        });
+
+        function validateCccdMatch(cccd) {
+            const student = candidatesDb.find(c => c.CCCD === cccd);
+            
+            const groupName = document.getElementById("groupEditName");
+            const groupDob = document.getElementById("groupEditDob");
+            const groupAddress = document.getElementById("groupEditAddress");
+            
+            if (student) {
+                cccdMatchLabel.textContent = `Khớp: ${student.name} (${student.dob})`;
+                cccdMatchLabel.style.color = "var(--success)";
+                
+                groupName.style.display = "none";
+                groupDob.style.display = "none";
+                groupAddress.style.display = "none";
+            } else {
+                if (cccd.length === 12) {
+                    cccdMatchLabel.textContent = "CCCD chưa có trong hệ thống. Nhập thông tin bên dưới để thêm mới thí sinh:";
+                    cccdMatchLabel.style.color = "var(--warning)";
+                    
+                    groupName.style.display = "block";
+                    groupDob.style.display = "block";
+                    groupAddress.style.display = "block";
+                } else {
+                    cccdMatchLabel.textContent = "Độ dài CCCD hợp lệ phải đúng 12 chữ số.";
+                    cccdMatchLabel.style.color = "var(--error)";
+                    
+                    groupName.style.display = "none";
+                    groupDob.style.display = "none";
+                    groupAddress.style.display = "none";
+                }
+            }
+        }
+
+        // Cập nhật thống kê câu Đúng (D) / Sai (S) của 3 cột câu hỏi
+        function updateColumnStats(answerKey) {
+            if (!answerKey) return;
+            const cols = [
+                { id: 1, start: 1, end: 10, header: document.getElementById("qCol1Header"), rows: document.getElementById("qCol1Rows") },
+                { id: 2, start: 11, end: 20, header: document.getElementById("qCol2Header"), rows: document.getElementById("qCol2Rows") },
+                { id: 3, start: 21, end: 30, header: document.getElementById("qCol3Header"), rows: document.getElementById("qCol3Rows") }
+            ];
+            
+            cols.forEach(col => {
+                let correct = 0;
+                let wrong = 0;
+                
+                for (let q = col.start; q <= col.end; q++) {
+                    const row = col.rows.querySelector(`.q-row[data-q-num="${q}"]`);
+                    if (row) {
+                        const selected = row.dataset.selectedAns;
+                        const correctAns = answerKey[q.toString()];
+                        if (selected === correctAns) {
+                            correct++;
+                        } else {
+                            wrong++;
+                        }
+                    }
+                }
+                
+                col.header.textContent = `Cột ${col.id} (${col.start}-${col.end}): D: ${correct} | S: ${wrong}`;
+            });
+        }
+
+        // Render bảng câu hỏi 30 câu trong Modal chia làm 3 cột có thống kê
+        function renderQuestionGridEditor(answers, answerKey) {
+            const col1Rows = document.getElementById("qCol1Rows");
+            const col2Rows = document.getElementById("qCol2Rows");
+            const col3Rows = document.getElementById("qCol3Rows");
+            
+            col1Rows.innerHTML = "";
+            col2Rows.innerHTML = "";
+            col3Rows.innerHTML = "";
+            
+            for (let q = 1; q <= 30; q++) {
+                const currentAns = answers[q.toString()] || "TRONG";
+                
+                const qRow = document.createElement("div");
+                qRow.className = "q-row";
+                qRow.dataset.qNum = q;
+                
+                const qNumSpan = document.createElement("span");
+                qNumSpan.className = "q-num";
+                qNumSpan.textContent = q.toString().padStart(2, '0');
+                
+                const optDiv = document.createElement("div");
+                optDiv.className = "opt-buttons";
+                
+                ["A", "B", "C", "D"].forEach(opt => {
+                    const btn = document.createElement("button");
+                    btn.className = "btn-opt";
+                    btn.textContent = opt;
+                    
+                    if (currentAns === opt) {
+                        btn.classList.add("active");
+                    } else if (currentAns === "TRUNG") {
+                        btn.classList.add("conflict");
+                    }
+                    
+                    btn.addEventListener("click", () => {
+                        Array.from(optDiv.children).forEach(b => {
+                            b.classList.remove("active");
+                            b.classList.remove("conflict");
+                        });
+                        btn.classList.add("active");
+                        qRow.dataset.selectedAns = opt;
+                        updateColumnStats(answerKey);
+                    });
+                    
+                    optDiv.appendChild(btn);
+                });
+                
+                qRow.dataset.selectedAns = currentAns;
+                
+                const btnClearOpt = document.createElement("button");
+                btnClearOpt.className = "btn-opt";
+                btnClearOpt.style.borderColor = "transparent";
+                btnClearOpt.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>`;
+                btnClearOpt.addEventListener("click", () => {
+                    Array.from(optDiv.children).forEach(b => {
+                        b.classList.remove("active");
+                        b.classList.remove("conflict");
+                    });
+                    qRow.dataset.selectedAns = "TRONG";
+                    updateColumnStats(answerKey);
+                });
+                
+                qRow.appendChild(qNumSpan);
+                qRow.appendChild(optDiv);
+                qRow.appendChild(btnClearOpt);
+                
+                // Đưa câu hỏi vào cột tương ứng
+                if (q <= 10) {
+                    col1Rows.appendChild(qRow);
+                } else if (q <= 20) {
+                    col2Rows.appendChild(qRow);
+                } else {
+                    col3Rows.appendChild(qRow);
+                }
+            }
+            
+            // Tính toán thống kê lần đầu
+            updateColumnStats(answerKey);
+        }
+
+        // Lưu Modal chỉnh sửa
+        btnModalSave.addEventListener("click", async () => {
+            const sheetId = editSheetId.value;
+            const cccd = editCccd.value.trim();
+            const de_thi = editDeThi.value.trim();
+            const name = document.getElementById("editName").value.trim();
+            const dob = document.getElementById("editDob").value.trim();
+            const address = document.getElementById("editAddress").value.trim();
+            
+            // Gom đáp án đã sửa từ container 3 cột
+            const answers = {};
+            const qRows = qColumnsContainer.querySelectorAll(".q-row");
+            qRows.forEach(row => {
+                const qNum = row.dataset.qNum;
+                const ans = row.dataset.selectedAns || "TRONG";
+                answers[qNum] = ans;
+            });
+            
+            try {
+                const res = await fetch(`/api/sheet/${sheetId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ cccd, de_thi, answers, name, dob, address })
+                });
+                const data = await res.json();
+                
+                if (data.status === "success") {
+                    // Cập nhật lại danh sách local
+                    const idx = processedSheets.findIndex(s => s.sheet_id === sheetId);
+                    if (idx !== -1) {
+                        processedSheets[idx] = data.sheet;
+                    }
+                    renderResultsTable();
+                    
+                    // Nếu là thêm mới sinh viên thành công, tải lại bảng danh sách sinh viên
+                    if (name) {
+                        fetchCandidates();
+                    }
+                    
+                    closeModal();
+                } else {
+                    alert("Lỗi cập nhật: " + data.message);
+                }
+            } catch(e) {
+                alert("Lỗi kết nối mạng khi lưu.");
+            }
+        });
+
+        // Đóng Modal
+        function closeModal() {
+            editModal.classList.remove("active");
+            activeSheetId = null;
+        }
+
+        btnModalClose.addEventListener("click", closeModal);
+        btnModalCancel.addEventListener("click", closeModal);
+
+        // 6. Xóa bộ nhớ tạm thời
+        btnClear.addEventListener("click", async () => {
+            if (!confirm("Bạn có chắc chắn muốn xóa toàn bộ kết quả chấm thi hiện tại khỏi bộ nhớ tạm? Việc này không khôi phục được.")) return;
+            
+            try {
+                const res = await fetch("/api/clear", { method: "POST" });
+                const data = await res.json();
+                if (data.status === "success") {
+                    processedSheets = [];
+                    renderResultsTable();
+                }
+            } catch(e) {
+                alert("Không thể kết nối máy chủ để xóa.");
+            }
+        });
+
+        // 7. Xuất file Excel kết quả
+        btnExport.addEventListener("click", () => {
+            // Tải file trực tiếp
+            window.location.href = "/api/export-excel";
+        });
+
+        // 8. Xuất file Word in điểm
+        btnPrintScores.addEventListener("click", () => {
+            window.location.href = "/api/export-docx";
+        });
+
+        // --- PHẦN HỆ THỐNG HIỆU CHỈNH TỌA ĐỘ ---
+        const btnTabGrading = document.getElementById("btnTabGrading");
+        const btnTabCalibration = document.getElementById("btnTabCalibration");
+        const gradingTab = document.getElementById("gradingTab");
+        const calibrationTab = document.getElementById("calibrationTab");
+
+        function switchTab(tabId) {
+            if (tabId === 'gradingTab') {
+                btnTabGrading.classList.add("active");
+                btnTabCalibration.classList.remove("active");
+                gradingTab.style.display = "grid";
+                calibrationTab.style.display = "none";
+            } else {
+                btnTabGrading.classList.remove("active");
+                btnTabCalibration.classList.add("active");
+                gradingTab.style.display = "none";
+                calibrationTab.style.display = "grid";
+                // Vẽ canvas hiệu chỉnh ban đầu nếu ảnh đã có
+                drawCalibration();
+            }
+        }
+        window.switchTab = switchTab; // Phơi ra toàn cục cho onclick
+
+        // Upload mẫu phiếu trống
+        const templateDropzone = document.getElementById("templateDropzone");
+        const templateFileInput = document.getElementById("templateFileInput");
+        const calibrationLoading = document.getElementById("calibrationLoading");
+        const calibrationCanvas = document.getElementById("calibrationCanvas");
+        const canvasContainer = document.getElementById("canvasContainer");
+        const canvasEmptyState = document.getElementById("canvasEmptyState");
+        const btnSaveCoords = document.getElementById("btnSaveCoords");
+
+        let calibrationImg = null; // Đối tượng Image chứa ảnh warped template
+        let activePointIdx = 0;
+
+        const CALIBRATION_POINTS = [
+            { id: "cccd_tl", name: "Số CCCD (Ô 0 cột 1 - Trên Trái)", x: null, y: null },
+            { id: "cccd_br", name: "Số CCCD (Ô 9 cột 12 - Dưới Phải)", x: null, y: null },
+            { id: "dethi_tl", name: "Đề thi số (Ô 0 cột 1 - Trên Trái)", x: null, y: null },
+            { id: "dethi_br", name: "Đề thi số (Ô 9 cột 4 - Dưới Phải)", x: null, y: null },
+            { id: "q1_10_tl", name: "Đáp án Cột 1 (Câu 1 A - Trên Trái)", x: null, y: null },
+            { id: "q1_10_br", name: "Đáp án Cột 1 (Câu 10 D - Dưới Phải)", x: null, y: null },
+            { id: "q11_20_tl", name: "Đáp án Cột 2 (Câu 11 A - Trên Trái)", x: null, y: null },
+            { id: "q11_20_br", name: "Đáp án Cột 2 (Câu 20 D - Dưới Phải)", x: null, y: null },
+            { id: "q21_30_tl", name: "Đáp án Cột 3 (Câu 21 A - Trên Trái)", x: null, y: null },
+            { id: "q21_30_br", name: "Đáp án Cột 3 (Câu 30 D - Dưới Phải)", x: null, y: null }
+        ];
+
+        // Tạo danh sách các điểm click trên Sidebar
+        const pointsListContainer = document.getElementById("calibrationPointsList");
+
+        function renderPointsList() {
+            pointsListContainer.innerHTML = "";
+            CALIBRATION_POINTS.forEach((pt, idx) => {
+                const item = document.createElement("div");
+                item.className = `point-item ${activePointIdx === idx ? 'active' : ''}`;
+                item.addEventListener("click", () => {
+                    activePointIdx = idx;
+                    renderPointsList();
+                    drawCalibration();
+                });
+
+                const label = document.createElement("span");
+                label.textContent = pt.name;
+
+                const status = document.createElement("span");
+                if (pt.x !== null && pt.y !== null) {
+                    status.className = "point-status status-set";
+                    status.textContent = `${pt.x}, ${pt.y}`;
+                } else {
+                    status.className = "point-status status-unset";
+                    status.textContent = "Chưa chọn";
+                }
+
+                item.appendChild(label);
+                item.appendChild(status);
+                pointsListContainer.appendChild(item);
+            });
+
+            // Kiểm tra xem tất cả các điểm đã được nhập tọa độ chưa
+            const allSet = CALIBRATION_POINTS.every(p => p.x !== null && p.y !== null);
+            btnSaveCoords.disabled = !allSet;
+        }
+
+        // Tải ảnh/PDF mẫu phiếu lên
+        templateDropzone.addEventListener("click", () => templateFileInput.click());
+        templateDropzone.addEventListener("dragover", e => {
+            e.preventDefault();
+            templateDropzone.style.borderColor = "var(--accent)";
+        });
+        templateDropzone.addEventListener("dragleave", () => {
+            templateDropzone.style.borderColor = "var(--border)";
+        });
+        templateDropzone.addEventListener("drop", e => {
+            e.preventDefault();
+            templateDropzone.style.borderColor = "var(--border)";
+            if (e.dataTransfer.files.length > 0) {
+                uploadTemplateFile(e.dataTransfer.files[0]);
+            }
+        });
+        templateFileInput.addEventListener("change", e => {
+            if (e.target.files.length > 0) {
+                uploadTemplateFile(e.target.files[0]);
+            }
+        });
+
+        async function uploadTemplateFile(file) {
+            calibrationLoading.classList.add("active");
+            const formData = new FormData();
+            formData.append("template_file", file);
+
+            try {
+                const res = await fetch("/api/upload-template", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    // Load image
+                    calibrationImg = new Image();
+                    calibrationImg.src = "data:image/jpeg;base64," + data.warped_image;
+                    calibrationImg.onload = function() {
+                        calibrationCanvas.width = 1000;
+                        calibrationCanvas.height = 1414;
+                        calibrationCanvas.style.display = "block";
+                        canvasEmptyState.style.display = "none";
+                        activePointIdx = 0;
+                        // Reset points
+                        CALIBRATION_POINTS.forEach(p => { p.x = null; p.y = null; });
+                        renderPointsList();
+                        drawCalibration();
+                        calibrationLoading.classList.remove("active");
+                    };
+                } else {
+                    alert("Lỗi: " + data.message);
+                    calibrationLoading.classList.remove("active");
+                }
+            } catch(e) {
+                alert("Không thể tải mẫu phiếu lên máy chủ.");
+                calibrationLoading.classList.remove("active");
+            }
+        }
+
+        // Click chọn tọa độ trên canvas
+        calibrationCanvas.addEventListener("click", e => {
+            if (!calibrationImg) return;
+            
+            const rect = calibrationCanvas.getBoundingClientRect();
+            // Tọa độ thực tế theo scale 1000x1414 của canvas
+            const x = Math.round((e.clientX - rect.left) / rect.width * 1000);
+            const y = Math.round((e.clientY - rect.top) / rect.height * 1414);
+
+            CALIBRATION_POINTS[activePointIdx].x = x;
+            CALIBRATION_POINTS[activePointIdx].y = y;
+
+            // Chuyển sang điểm tiếp theo tự động
+            activePointIdx = (activePointIdx + 1) % 10;
+            renderPointsList();
+            drawCalibration();
+        });
+
+        // Hàm vẽ Canvas hiệu chỉnh kèm các vòng tròn nội suy trực tiếp để xem trước
+        function drawCalibration() {
+            if (!calibrationImg) return;
+            const ctx = calibrationCanvas.getContext("2d");
+            ctx.clearRect(0, 0, 1000, 1414);
+            ctx.drawImage(calibrationImg, 0, 0, 1000, 1414);
+
+            // 1. Vẽ các điểm định vị đã chọn
+            CALIBRATION_POINTS.forEach((pt, idx) => {
+                if (pt.x !== null && pt.y !== null) {
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
+                    ctx.fillStyle = activePointIdx === idx ? "#06b6d4" : "#10b981";
+                    ctx.fill();
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Nhãn
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "bold 12px Inter";
+                    ctx.shadowColor = "black";
+                    ctx.shadowBlur = 4;
+                    ctx.fillText((idx + 1).toString(), pt.x + 8, pt.y + 4);
+                    ctx.shadowBlur = 0;
+                }
+            });
+
+            // 2. Nội suy & Vẽ lưới xem trước Số CCCD (12 cột x 10 hàng)
+            const cccd_tl = CALIBRATION_POINTS[0];
+            const cccd_br = CALIBRATION_POINTS[1];
+            if (cccd_tl.x !== null && cccd_br.x !== null) {
+                for (let col = 0; col < 12; col++) {
+                    for (let row = 0; row < 10; row++) {
+                        const cx = Math.round(cccd_tl.x + col * ((cccd_br.x - cccd_tl.x) / 11));
+                        const cy = Math.round(cccd_tl.y + row * ((cccd_br.y - cccd_tl.y) / 9));
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, 7, 0, 2 * Math.PI);
+                        ctx.strokeStyle = "rgba(16, 185, 129, 0.6)";
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // 3. Nội suy & Vẽ lưới xem trước Đề thi số (4 cột x 10 hàng)
+            const dethi_tl = CALIBRATION_POINTS[2];
+            const dethi_br = CALIBRATION_POINTS[3];
+            if (dethi_tl.x !== null && dethi_br.x !== null) {
+                for (let col = 0; col < 4; col++) {
+                    for (let row = 0; row < 10; row++) {
+                        const cx = Math.round(dethi_tl.x + col * ((dethi_br.x - dethi_tl.x) / 3));
+                        const cy = Math.round(dethi_tl.y + row * ((dethi_br.y - dethi_tl.y) / 9));
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, 7, 0, 2 * Math.PI);
+                        ctx.strokeStyle = "rgba(6, 182, 212, 0.6)";
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // 4. Nội suy & Vẽ đáp án Cột 1 (Q1-10)
+            const q1_10_tl = CALIBRATION_POINTS[4];
+            const q1_10_br = CALIBRATION_POINTS[5];
+            if (q1_10_tl.x !== null && q1_10_br.x !== null) {
+                for (let row = 0; row < 10; row++) {
+                    for (let col = 0; col < 4; col++) {
+                        const cx = Math.round(q1_10_tl.x + col * ((q1_10_br.x - q1_10_tl.x) / 3));
+                        const cy = Math.round(q1_10_tl.y + row * ((q1_10_br.y - q1_10_tl.y) / 9));
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, 9, 0, 2 * Math.PI);
+                        ctx.strokeStyle = "rgba(245, 158, 11, 0.6)";
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // 5. Nội suy & Vẽ đáp án Cột 2 (Q11-20)
+            const q11_20_tl = CALIBRATION_POINTS[6];
+            const q11_20_br = CALIBRATION_POINTS[7];
+            if (q11_20_tl.x !== null && q11_20_br.x !== null) {
+                for (let row = 0; row < 10; row++) {
+                    for (let col = 0; col < 4; col++) {
+                        const cx = Math.round(q11_20_tl.x + col * ((q11_20_br.x - q11_20_tl.x) / 3));
+                        const cy = Math.round(q11_20_tl.y + row * ((q11_20_br.y - q11_20_tl.y) / 9));
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, 9, 0, 2 * Math.PI);
+                        ctx.strokeStyle = "rgba(245, 158, 11, 0.6)";
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // 6. Nội suy & Vẽ đáp án Cột 3 (Q21-30)
+            const q21_30_tl = CALIBRATION_POINTS[8];
+            const q21_30_br = CALIBRATION_POINTS[9];
+            if (q21_30_tl.x !== null && q21_30_br.x !== null) {
+                for (let row = 0; row < 10; row++) {
+                    for (let col = 0; col < 4; col++) {
+                        const cx = Math.round(q21_30_tl.x + col * ((q21_30_br.x - q21_30_tl.x) / 3));
+                        const cy = Math.round(q21_30_tl.y + row * ((q21_30_br.y - q21_30_tl.y) / 9));
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, 9, 0, 2 * Math.PI);
+                        ctx.strokeStyle = "rgba(245, 158, 11, 0.6)";
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        // Lưu cấu hình tọa độ lên server
+        btnSaveCoords.addEventListener("click", async () => {
+            const cccd_tl = CALIBRATION_POINTS[0];
+            const cccd_br = CALIBRATION_POINTS[1];
+            const dethi_tl = CALIBRATION_POINTS[2];
+            const dethi_br = CALIBRATION_POINTS[3];
+            
+            // 1. Tạo tọa độ CCCD
+            const cccd_coords = [];
+            for (let col = 0; col < 12; col++) {
+                const col_arr = [];
+                for (let row = 0; row < 10; row++) {
+                    const cx = Math.round(cccd_tl.x + col * ((cccd_br.x - cccd_tl.x) / 11));
+                    const cy = Math.round(cccd_tl.y + row * ((cccd_br.y - cccd_tl.y) / 9));
+                    col_arr.push([cx, cy]);
+                }
+                cccd_coords.push(col_arr);
+            }
+            
+            // 2. Tạo tọa độ Đề thi số
+            const dethi_coords = [];
+            for (let col = 0; col < 4; col++) {
+                const col_arr = [];
+                for (let row = 0; row < 10; row++) {
+                    const cx = Math.round(dethi_tl.x + col * ((dethi_br.x - dethi_tl.x) / 3));
+                    const cy = Math.round(dethi_tl.y + row * ((dethi_br.y - dethi_tl.y) / 9));
+                    col_arr.push([cx, cy]);
+                }
+                dethi_coords.push(col_arr);
+            }
+            
+            // 3. Tạo tọa độ đáp án 30 câu
+            const answers_coords = {};
+            const q1_10_tl = CALIBRATION_POINTS[4];
+            const q1_10_br = CALIBRATION_POINTS[5];
+            const q11_20_tl = CALIBRATION_POINTS[6];
+            const q11_20_br = CALIBRATION_POINTS[7];
+            const q21_30_tl = CALIBRATION_POINTS[8];
+            const q21_30_br = CALIBRATION_POINTS[9];
+            
+            // Cột 1: Câu 1-10
+            for (let row = 0; row < 10; row++) {
+                const qNum = 1 + row;
+                const q_arr = [];
+                for (let col = 0; col < 4; col++) {
+                    const cx = Math.round(q1_10_tl.x + col * ((q1_10_br.x - q1_10_tl.x) / 3));
+                    const cy = Math.round(q1_10_tl.y + row * ((q1_10_br.y - q1_10_tl.y) / 9));
+                    q_arr.push([cx, cy]);
+                }
+                answers_coords[qNum.toString()] = q_arr;
+            }
+            
+            // Cột 2: Câu 11-20
+            for (let row = 0; row < 10; row++) {
+                const qNum = 11 + row;
+                const q_arr = [];
+                for (let col = 0; col < 4; col++) {
+                    const cx = Math.round(q11_20_tl.x + col * ((q11_20_br.x - q11_20_tl.x) / 3));
+                    const cy = Math.round(q11_20_tl.y + row * ((q11_20_br.y - q11_20_tl.y) / 9));
+                    q_arr.push([cx, cy]);
+                }
+                answers_coords[qNum.toString()] = q_arr;
+            }
+            
+            // Cột 3: Câu 21-30
+            for (let row = 0; row < 10; row++) {
+                const qNum = 21 + row;
+                const q_arr = [];
+                for (let col = 0; col < 4; col++) {
+                    const cx = Math.round(q21_30_tl.x + col * ((q21_30_br.x - q21_30_tl.x) / 3));
+                    const cy = Math.round(q21_30_tl.y + row * ((q21_30_br.y - q21_30_tl.y) / 9));
+                    q_arr.push([cx, cy]);
+                }
+                answers_coords[qNum.toString()] = q_arr;
+            }
+
+            const payload = {
+                cccd: cccd_coords,
+                de_thi: dethi_coords,
+                answers: answers_coords
+            };
+
+            try {
+                const res = await fetch("/api/save-coordinates", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    alert("Thành công: Đã lưu và kích hoạt cấu hình tọa độ cho mẫu phiếu của bạn!");
+                    switchTab('gradingTab');
+                } else {
+                    alert("Lỗi: " + data.message);
+                }
+            } catch(e) {
+                alert("Không thể lưu cấu hình lên máy chủ.");
+            }
+        });
+
+        async function loadDefaultCalibration() {
+            try {
+                const res = await fetch("/api/current-calibration");
+                const data = await res.json();
+                if (data.status === "success") {
+                    // Nạp tọa độ các điểm mốc đã lưu
+                    CALIBRATION_POINTS.forEach(pt => {
+                        const val = data.points[pt.id];
+                        if (val) {
+                            pt.x = val[0];
+                            pt.y = val[1];
+                        }
+                    });
+                    
+                    // Nạp ảnh mẫu mặc định lên canvas
+                    calibrationImg = new Image();
+                    calibrationImg.src = "data:image/jpeg;base64," + data.image;
+                    calibrationImg.onload = function() {
+                        calibrationCanvas.width = 1000;
+                        calibrationCanvas.height = 1414;
+                        calibrationCanvas.style.display = "block";
+                        canvasEmptyState.style.display = "none";
+                        renderPointsList();
+                        drawCalibration();
+                    };
+                }
+            } catch(e) {
+                console.error("Không thể tự động tải cấu hình tọa độ hiện tại:", e);
+            }
+        }
+
+        // Khởi tạo ban đầu cho Calibration tab
+        renderPointsList();
+        loadDefaultCalibration();
+
+        // Load ban đầu
+        fetchCandidates();
+    </script>
+</body>
+</html>

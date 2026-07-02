@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# User Uploads
+uploads/
+!uploads/.gitkeep
+
+# Generated test sheets (keep raw templates but ignore simulated output sheets)
+phieu_mau_*.png
+test_filled_sheet.png
+alignment_check.png
+phieu_lam_mau_test.png
+* copy.png
