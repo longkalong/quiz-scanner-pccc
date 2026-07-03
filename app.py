@@ -95,17 +95,31 @@ def load_answer_key():
 load_candidates()
 load_answer_key()
 
-def calculate_score(student_answers):
+def get_answer_key_for_dethi(dethi):
+    """Tải đáp án cho một mã đề thi cụ thể, nếu không có trả về None"""
+    if not dethi or "?" in dethi:
+        return None
+    key_path = os.path.join(BASE_DIR, "data", "answer_keys", f"{dethi}.json")
+    if os.path.exists(key_path):
+        try:
+            with open(key_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"[!] Lỗi khi đọc file đáp án mã đề {dethi}: {e}")
+    return None
+
+def calculate_score(student_answers, custom_key=None):
     """Tính số câu đúng và quy điểm hệ 10"""
-    if not ANSWER_KEY:
+    key_to_use = custom_key if custom_key is not None else ANSWER_KEY
+    if not key_to_use:
         return 0, 0
     correct_count = 0
-    for q_num, ans in ANSWER_KEY.items():
+    for q_num, ans in key_to_use.items():
         student_ans = student_answers.get(str(q_num), "")
         if student_ans == ans:
             correct_count += 1
     # Tính điểm hệ 10 làm tròn 2 chữ số thập phân
-    score = round((correct_count / len(ANSWER_KEY)) * 10, 2)
+    score = round((correct_count / len(key_to_use)) * 10, 2)
     return correct_count, score
 
 @app.route("/")
@@ -136,6 +150,8 @@ def upload_files():
         return jsonify({"status": "error", "message": "Không tìm thấy file nào được tải lên."}), 400
         
     uploaded_files = request.files.getlist('files')
+    # Đọc tham số nút gạt mã đề thi từ giao diện gửi lên
+    use_dethi = request.form.get("use_dethi", "false") == "true"
     results = []
     
     for file in uploaded_files:
@@ -179,13 +195,13 @@ def upload_files():
                 sheet_data, err, debug_img = processor.process_sheet(img)
                 
                 if err:
-                    # Ghi nhận lỗi quét nhưng vẫn cho vào danh sách để người dùng có thể tải lại hoặc sửa bằng tay
                     sheet_result = {
                         "sheet_id": sheet_id,
                         "filename": filename,
                         "page": page_num,
                         "cccd": "",
                         "de_thi": "",
+                        "use_dethi": use_dethi,
                         "student_info": None,
                         "answers": {str(q): "TRONG" for q in range(1, 31)},
                         "correct_count": 0,
@@ -199,26 +215,43 @@ def upload_files():
                     dethi = sheet_data.get("de_thi", "")
                     answers = sheet_data["answers"]
                     
+                    # Xác định bộ đáp án sử dụng để chấm
+                    sheet_answer_key = None
+                    warning_key_msg = ""
+                    
+                    if use_dethi:
+                        sheet_answer_key = get_answer_key_for_dethi(dethi)
+                        if not sheet_answer_key:
+                            sheet_answer_key = ANSWER_KEY
+                            if dethi and "?" not in dethi:
+                                warning_key_msg = f"Không tìm thấy đáp án mẫu cho mã đề {dethi}, dùng tạm đáp án chung. "
+                            else:
+                                warning_key_msg = "Không có mã đề thi hợp lệ để đối chiếu, dùng tạm đáp án chung. "
+                    else:
+                        sheet_answer_key = ANSWER_KEY
+                        
                     # Khớp tên từ danh sách
                     student_info = CANDIDATES_DB.get(cccd, None)
-                    correct_count, score = calculate_score(answers)
+                    correct_count, score = calculate_score(answers, custom_key=sheet_answer_key)
                     
-                    # Xác định xem bài quét có lỗi không (bao gồm CCCD không hợp lệ hoặc thiếu đáp án)
+                    # Xác định xem bài quét có lỗi không
                     has_error = (
                         student_info is None or 
                         "?" in cccd or 
-                        "?" in dethi or
+                        (use_dethi and ("?" in dethi or not dethi)) or
                         any(v in ["TRONG", "TRUNG"] for v in answers.values())
                     )
                     
-                    error_msg = ""
+                    error_msg = warning_key_msg
                     if "?" in cccd:
-                        error_msg = "Lỗi tô CCCD. "
+                        error_msg += "Lỗi tô CCCD. "
                     elif student_info is None:
-                        error_msg = "Không tìm thấy CCCD trong danh sách sinh viên. "
+                        error_msg += "Không tìm thấy CCCD trong danh sách sinh viên. "
                         
-                    if "?" in dethi:
-                        error_msg += "Lỗi tô Đề thi số. "
+                    if use_dethi and ("?" in dethi or not dethi):
+                        error_msg += "Lỗi/Thiếu Đề thi số. "
+                    elif not use_dethi and "?" in dethi:
+                        error_msg += "(Cảnh báo: Lỗi nhận diện mã đề). "
                         
                     if any(v == "TRONG" for v in answers.values()):
                         error_msg += "Có câu chưa tô. "
@@ -231,6 +264,7 @@ def upload_files():
                         "page": page_num,
                         "cccd": cccd,
                         "de_thi": dethi,
+                        "use_dethi": use_dethi,
                         "student_info": student_info,
                         "answers": answers,
                         "correct_count": correct_count,
@@ -243,8 +277,7 @@ def upload_files():
                 # Lưu vào bộ nhớ tạm thời của Server
                 PROCESSED_SHEETS[sheet_id] = sheet_result
                 
-                # Để giảm dung lượng JSON trả về, ta clone và loại bỏ ảnh debug nếu không lỗi hoặc tùy nhu cầu
-                # Tuy nhiên để hiển thị sửa nhanh thì vẫn giữ lại debug_img trong PROCESSED_SHEETS
+                # Trả về kết quả client (loại bỏ debug_img để tối ưu dung lượng)
                 client_item = {k: v for k, v in sheet_result.items() if k != "debug_img"}
                 results.append(client_item)
                 
@@ -271,9 +304,19 @@ def get_sheet_detail(sheet_id):
         
     # Clone sheet kết quả để vẽ thêm đè lên ảnh hiển thị
     sheet_clone = json.loads(json.dumps(sheet))
-    sheet_clone["answer_key"] = ANSWER_KEY
     
-    if sheet_clone.get("debug_img") and ANSWER_KEY:
+    # Xác định bộ đáp án sử dụng để khoanh đỏ
+    dethi = sheet.get("de_thi", "")
+    use_dethi = sheet.get("use_dethi", False)
+    sheet_answer_key = None
+    if use_dethi:
+        sheet_answer_key = get_answer_key_for_dethi(dethi)
+    if not sheet_answer_key:
+        sheet_answer_key = ANSWER_KEY
+        
+    sheet_clone["answer_key"] = sheet_answer_key
+    
+    if sheet_clone.get("debug_img") and sheet_answer_key:
         try:
             import base64
             # Giải mã ảnh debug_img thành OpenCV Image
@@ -284,12 +327,11 @@ def get_sheet_detail(sheet_id):
             if img is not None:
                 # Vẽ vòng tròn đỏ rực to hơn (bán kính 12, độ dày 2) bao quanh đáp án đúng
                 options_map = {"A": 0, "B": 1, "C": 2, "D": 3}
-                for q_str, correct_ans in ANSWER_KEY.items():
+                for q_str, correct_ans in sheet_answer_key.items():
                     if q_str in processor.coords["answers"]:
                         opt_idx = options_map.get(correct_ans)
                         if opt_idx is not None:
                             cx, cy = processor.coords["answers"][q_str][opt_idx]
-                            # BGR: màu đỏ (0, 0, 255)
                             cv2.circle(img, (cx, cy), 12, (0, 0, 255), 2)
                             
                 # Lưu lại ảnh đã vẽ đè vòng tròn đỏ
@@ -362,9 +404,24 @@ def update_sheet_detail(sheet_id):
     sheet["de_thi"] = dethi
     sheet["answers"].update(answers)
     
-    # Tính toán lại điểm số và kiểm tra danh sách thí sinh
+    # Tính toán lại điểm số và kiểm tra danh sách thí sinh dựa trên chế độ mã đề thi đã chọn
+    use_dethi = sheet.get("use_dethi", False)
+    sheet_answer_key = None
+    warning_key_msg = ""
+    
+    if use_dethi:
+        sheet_answer_key = get_answer_key_for_dethi(dethi)
+        if not sheet_answer_key:
+            sheet_answer_key = ANSWER_KEY
+            if dethi and "?" not in dethi:
+                warning_key_msg = f"Không tìm thấy đáp án mẫu cho mã đề {dethi}, dùng tạm đáp án chung. "
+            else:
+                warning_key_msg = "Không có mã đề thi hợp lệ để đối chiếu, dùng tạm đáp án chung. "
+    else:
+        sheet_answer_key = ANSWER_KEY
+        
     student_info = CANDIDATES_DB.get(cccd, None)
-    correct_count, score = calculate_score(sheet["answers"])
+    correct_count, score = calculate_score(sheet["answers"], custom_key=sheet_answer_key)
     
     sheet["student_info"] = student_info
     sheet["correct_count"] = correct_count
@@ -374,18 +431,20 @@ def update_sheet_detail(sheet_id):
     has_error = (
         student_info is None or 
         "?" in cccd or 
-        "?" in dethi or
+        (use_dethi and ("?" in dethi or not dethi)) or
         any(v in ["TRONG", "TRUNG"] for v in sheet["answers"].values())
     )
     
-    error_msg = ""
+    error_msg = warning_key_msg
     if "?" in cccd or not cccd:
-        error_msg = "Lỗi/Thiếu CCCD. "
+        error_msg += "Lỗi/Thiếu CCCD. "
     elif student_info is None:
-        error_msg = "Không tìm thấy CCCD trong danh sách sinh viên. "
+        error_msg += "Không tìm thấy CCCD trong danh sách sinh viên. "
         
-    if "?" in dethi or not dethi:
+    if use_dethi and ("?" in dethi or not dethi):
         error_msg += "Lỗi/Thiếu Đề thi số. "
+    elif not use_dethi and "?" in dethi:
+        error_msg += "(Cảnh báo: Lỗi nhận diện mã đề). "
         
     if any(v == "TRONG" for v in sheet["answers"].values()):
         error_msg += "Có câu chưa tô. "

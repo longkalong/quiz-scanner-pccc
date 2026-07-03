@@ -214,6 +214,55 @@
             color: #64748b;
         }
 
+        /* Switch/Toggle Button Styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-muted);
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+            background-color: var(--success);
+        }
+
         /* Candidates List (Mini Panel) */
         .candidates-info-panel {
             max-height: 250px;
@@ -689,6 +738,13 @@
                         </svg>
                         Tải phiếu chấm thi
                     </h2>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; padding: 0.625rem 0.875rem; background: rgba(30, 41, 59, 0.4); border-radius: var(--radius-md); border: 1px solid var(--border);">
+                        <span style="font-size: 0.875rem; font-weight: 500; color: var(--text);">Phân loại theo Mã đề thi</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggleDethi">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                     <div class="upload-zone" id="dropzone">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
@@ -949,6 +1005,9 @@
             for (let i = 0; i < files.length; i++) {
                 formData.append("files", files[i]);
             }
+            
+            const toggleDethi = document.getElementById("toggleDethi");
+            formData.append("use_dethi", toggleDethi.checked ? "true" : "false");
             
             try {
                 const res = await fetch("/api/upload", {
@@ -1277,11 +1336,13 @@
                 answers[qNum] = ans;
             });
             
+            const use_dethi = document.getElementById("toggleDethi").checked;
+            
             try {
                 const res = await fetch(`/api/sheet/${sheetId}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ cccd, de_thi, answers, name, dob, address })
+                    body: JSON.stringify({ cccd, de_thi, answers, name, dob, address, use_dethi })
                 });
                 const data = await res.json();
                 
